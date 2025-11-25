@@ -1,0 +1,48 @@
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+*.egg-info/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Logs and databases
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python dependencies
+site-packages/
+
+# IDE temp files
+*.swp
+*.swo
+*~
+.DS_Store
