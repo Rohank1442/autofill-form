@@ -1,6 +1,6 @@
 # app/main.py
 from fastapi import FastAPI
-from app.api.v1.endpoints import user, form_extract, auto_fill, health, home
+from app.api.v1.endpoints import user, form_extract, auto_fill, health, home, parse_resume
 from app.core.config import settings
 from app.db.session import init_db
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +25,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(home.router)
+app.include_router(parse_resume.router, prefix="/api/v1/resume", tags=["resume"])
 app.include_router(upload.router, prefix="/upload", tags=["upload"])
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(user.router, prefix="/api/v1/user", tags=["user"])
