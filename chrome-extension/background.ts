@@ -1,3 +1,3 @@
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("Autofill-AI extension installed");
+chrome.runtime.onMessage.addListener((msg) => {
+  console.log("BACKGROUND RECEIVED:", msg);
 });
