@@ -1,40 +1,33 @@
-/// <reference types="chrome"/>
+console.log("Popup loaded");
 
-const fillFormBtn = document.getElementById("fillForm");
-const statusDiv = document.getElementById("status");
-
-if (!fillFormBtn || !statusDiv) {
-  throw new Error("Missing required HTML elements in popup.html");
-}
-
-fillFormBtn.addEventListener("click", async () => {
-  statusDiv.textContent = "Fetching profile...";
-
-  try {
-    const res = await fetch("http://127.0.0.1:8000/api/v1/user");
-    if (!res.ok) throw new Error("Failed to fetch user profile");
-
-    const users = await res.json();
-    if (!users.length) {
-      statusDiv.textContent = "No profiles found!";
-      return;
-    }
-
-    const profile = users[users.length - 1];
-    console.log("Sending profile to content script:", profile);
-
+// ADD THIS ↓
+document.getElementById("extractBtn")?.addEventListener("click", async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) {
-      statusDiv.textContent = "No active tab found!";
-      return;
-    }
 
-    // Send profile to content script
-    chrome.tabs.sendMessage(tab.id, { action: "FILL_FORM", profile });
-
-    statusDiv.textContent = "Attempting to fill form...";
-  } catch (err: any) {
-    console.error(err);
-    statusDiv.textContent = `Error: ${err.message || err}`;
-  }
+    chrome.tabs.sendMessage(tab.id!, { action: "EXTRACT_FIELDS" });
 });
+
+// ADD LISTENER FOR RESPONSE FROM CONTENT SCRIPT
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.action === "FIELDS_EXTRACTED") {
+        console.log("Extracted fields:", msg.fields);
+        renderFields(msg.fields);
+    }
+});
+
+function renderFields(fields: any[]) {
+    const container = document.getElementById("fields");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    fields.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "field-preview";
+
+        div.innerText =
+            `${f.label || f.placeholder || f.name || f.id || f.type} (${f.tag})`;
+
+        container.appendChild(div);
+    });
+}
