@@ -10,10 +10,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             fields
         });
 
+        chrome.runtime.onMessage.addListener((msg) => {
+            if (msg.action === "SHOW_SUGGESTIONS") {
+                showSuggestionOverlays(msg.suggestions);
+        }
+});
+
         sendResponse({ status: "ok" });
     }
 });
-
 
 // -----------------------------
 // FIELD EXTRACTION CORE LOGIC
@@ -46,6 +51,51 @@ function extractAllFields() {
     });
 
     return fields;
+}
+
+
+function showSuggestionOverlays(mapping: any) {
+    mapping.forEach((item: any) => {
+        const el = getElementByXPath(item.xpath);
+        if (!el) return;
+
+        const rect = el.getBoundingClientRect();
+
+        const bubble = document.createElement("div");
+        bubble.innerHTML = `
+            <div style="
+                background: white;
+                border: 1px solid #ccc;
+                padding: 6px;
+                border-radius: 6px;
+                position: absolute;
+                font-size: 12px;
+                z-index: 999999999;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                cursor: pointer;
+            ">
+                <b>AI:</b> ${item.value}
+                <br/>
+                <button style="margin-top:4px;">Fill</button>
+            </div>
+        `;
+
+        const box = bubble.firstElementChild as HTMLElement;
+        box.style.top = `${rect.top + window.scrollY}px`;
+        box.style.left = `${rect.right + window.scrollX + 10}px`;
+
+        document.body.appendChild(bubble);
+
+        box.querySelector("button")?.addEventListener("click", () => {
+            try {
+                (el as HTMLInputElement).value = item.value;
+            } catch {
+                navigator.clipboard.writeText(item.value);
+                alert("Unable to write into field. Copied instead!");
+            }
+            bubble.remove();
+        });
+    });
 }
 
 
@@ -125,4 +175,19 @@ function getXPath(element: Element): string {
     }
 
     return "/" + parts.join("/");
+}
+
+function getElementByXPath(path: string): HTMLElement | null {
+    try {
+        const result = document.evaluate(
+            path,
+            document,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+        );
+        return result.singleNodeValue as HTMLElement;
+    } catch {
+        return null;
+    }
 }

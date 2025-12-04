@@ -1,17 +1,28 @@
 console.log("Popup loaded");
 
-// ADD THIS ↓
-document.getElementById("extractBtn")?.addEventListener("click", async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-    chrome.tabs.sendMessage(tab.id!, { action: "EXTRACT_FIELDS" });
+document.getElementById("extractBtn")?.addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id!, { action: "EXTRACT_FIELDS" });
+    });
 });
 
 // ADD LISTENER FOR RESPONSE FROM CONTENT SCRIPT
 chrome.runtime.onMessage.addListener((msg) => {
     if (msg.action === "FIELDS_EXTRACTED") {
-        console.log("Extracted fields:", msg.fields);
-        renderFields(msg.fields);
+        fetch("http://localhost:8000/ai-autofill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fields: msg.fields })
+        })
+        .then(res => res.json())
+        .then(data => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                chrome.tabs.sendMessage(tabs[0].id!, {
+                    action: "SHOW_SUGGESTIONS",
+                    suggestions: data
+                });
+            });
+        });
     }
 });
 
